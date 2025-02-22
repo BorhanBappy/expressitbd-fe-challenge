@@ -69,10 +69,6 @@ const Task1: NextPage = () => {
       return;
     }
 
-    // Correct country to full name
-    const fullCountryName =
-      formData.country === "bd" ? "Bangladesh" : formData.country;
-
     // Add ".expressitbd.com" to the domain
     const fullDomain = formData.domain.trim().toLowerCase(); // Trim spaces and
 
@@ -86,6 +82,8 @@ const Task1: NextPage = () => {
 
       if (domainCheck.data.available) {
         setServerError("Domain is already taken");
+        setIsSubmitting(false);
+        return; // Stop execution if the domain is taken
       } else {
         // Proceed to create store if domain is unavailable
         await axios.post(
@@ -93,7 +91,7 @@ const Task1: NextPage = () => {
           {
             name: formData.name,
             currency: formData.currency,
-            country: fullCountryName, // Use full country name
+            country: formData.country, // Use full country name
             domain: fullDomain, // Use the full domain with '.expressitbd.com'
             category: formData.category,
             email: formData.email,
@@ -209,7 +207,11 @@ const Task1: NextPage = () => {
             <select
               value={formData.country}
               onChange={(e) => handleInputChange("country", e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className={`w-full p-2 border rounded-md ${
+                errors.some((e) => e.path[0] === "country")
+                  ? "border-red-500"
+                  : ""
+              }`}
               disabled={isSubmitting}
             >
               <option value="">Select Country</option>
@@ -219,6 +221,11 @@ const Task1: NextPage = () => {
                 </option>
               ))}
             </select>
+            {errors.some((e) => e.path[0] === "country") && (
+              <p className="text-red-500 text-sm font-semibold">
+                Please select a country
+              </p>
+            )}
           </div>
 
           {/* Category Select */}
@@ -227,7 +234,11 @@ const Task1: NextPage = () => {
             <select
               value={formData.category}
               onChange={(e) => handleInputChange("category", e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className={`w-full p-2 border rounded-md ${
+                errors.some((e) => e.path[0] === "category")
+                  ? "border-red-500"
+                  : ""
+              }`}
               disabled={isSubmitting}
             >
               <option value="">Select Category</option>
@@ -237,6 +248,11 @@ const Task1: NextPage = () => {
                 </option>
               ))}
             </select>
+            {errors.some((e) => e.path[0] === "category") && (
+              <p className="text-red-500 text-sm font-semibold">
+                Please select a category
+              </p>
+            )}
           </div>
 
           {/* Currency Select */}
@@ -245,7 +261,11 @@ const Task1: NextPage = () => {
             <select
               value={formData.currency}
               onChange={(e) => handleInputChange("currency", e.target.value)}
-              className="w-full p-2 border rounded-md"
+              className={`w-full p-2 border rounded-md ${
+                errors.some((e) => e.path[0] === "currency")
+                  ? "border-red-500"
+                  : ""
+              }`}
               disabled={isSubmitting}
             >
               <option value="">Select Currency</option>
@@ -255,6 +275,11 @@ const Task1: NextPage = () => {
                 </option>
               ))}
             </select>
+            {errors.some((e) => e.path[0] === "currency") && (
+              <p className="text-red-500 text-sm font-semibold">
+                Please select a currency
+              </p>
+            )}
           </div>
 
           {/* Email Input */}

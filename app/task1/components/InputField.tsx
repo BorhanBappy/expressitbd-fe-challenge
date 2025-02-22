@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { StoreFormData } from "@/app/task1/schemas";
+import { StoreFormData } from "@/app/task1/components/schemas";
 import { getErrorMessage } from "@/app/utils/formUtils";
 
 export const InputField = ({

@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
 "use client";
 
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
 import { NextPage } from "next";
-import { InputField } from "@/app/components/InputField";
-import { SelectField } from "@/app/components/SelectField";
-import { StoreSchema, StoreFormData } from "./schemas";
-import { FORM_CONFIG } from "./formConfig";
+import { InputField } from "@/app/task1/components/InputField";
+import { SelectField } from "@/app/task1/components/SelectField";
+import { StoreSchema, StoreFormData } from "./components/schemas";
+import { FORM_CONFIG } from "./components/formConfig";
 import { z } from "zod";
 
 const Task1: NextPage = () => {

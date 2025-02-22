@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 export const StoreSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters"),
   domain: z
@@ -16,7 +15,7 @@ export const StoreSchema = z.object({
     ),
   country: z.string().min(1, "Please select a country"),
   category: z.string().min(1, "Please select a category"),
-  currency: z.string().length(3, "Currency must be 3 characters"),
+  currency: z.string().length(3, "Please select a category"),
   email: z.string().email("Invalid email address"),
 });
 

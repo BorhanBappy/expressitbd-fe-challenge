@@ -23,7 +23,7 @@ export default function Navbar() {
         </Link>
         <Link
           href="/task1"
-          className={`text-lg font-medium px-6 py-2 rounded-full transition-all duration-200
+          className={`text-md  md:text-lg font-medium px-6 py-2 rounded-full transition-all duration-200
                       hover:bg-white/10 hover:scale-[1.02] hover:shadow-sm
                       ${
                         pathname === "/task1"
@@ -35,7 +35,7 @@ export default function Navbar() {
         </Link>
         <Link
           href="/task2"
-          className={`text-lg font-medium px-6 py-2 rounded-full transition-all duration-200
+          className={`text-md md:text-lg font-medium px-6 py-2 rounded-full transition-all duration-200
                       hover:bg-white/10 hover:scale-[1.02] hover:shadow-sm
                       ${
                         pathname === "/task2"

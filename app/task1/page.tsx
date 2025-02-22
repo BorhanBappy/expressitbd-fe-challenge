@@ -1,4 +1,3 @@
-// pages/task1.tsx
 "use client";
 
 import { useState } from "react";
@@ -13,29 +12,32 @@ const StoreSchema = z.object({
   domain: z
     .string()
     .min(3, "Domain must be at least 3 characters")
-    .refine((val) => !val.includes(" "), "Domain cannot contain spaces"),
-  currency: z.string().length(3, "Currency must be 3 characters"),
+    .refine((val) => !val.includes(" "), "Domain cannot contain spaces")
+    .refine(
+      (val) => /^[a-z0-9-]+$/.test(val),
+      "Domain can only contain lowercase letters, numbers, and hyphens"
+    )
+    .refine(
+      (val) => !val.startsWith("-") && !val.endsWith("-"),
+      "Domain cannot start or end with a hyphen"
+    ),
   country: z.string().min(1, "Please select a country"),
   category: z.string().min(1, "Please select a category"),
+  currency: z.string().length(3, "Currency must be 3 characters"),
   email: z.string().email("Invalid email address"),
 });
 
 type StoreFormData = z.infer<typeof StoreSchema>;
 
-const currencyOptions = [
-  { value: "BDT", label: "Bangladeshi Taka (BDT)" },
-  { value: "USD", label: "US Dollar (USD)" },
-  { value: "EUR", label: "Euro (EUR)" },
-  { value: "GBP", label: "British Pound (GBP)" },
-];
 const countryOptions = [
-  { value: "us", label: "United States" },
-  { value: "ca", label: "Canada" },
-  { value: "uk", label: "United Kingdom" },
-  { value: "bd", label: "Bangladesh" },
-  { value: "in", label: "India" },
-  { value: "au", label: "Australia" },
+  { value: "United States", label: "United States" },
+  { value: "Canada", label: "Canada" },
+  { value: "United Kingdom", label: "United Kingdom" },
+  { value: "Bangladesh", label: "Bangladesh" },
+  { value: "India", label: "India" },
+  { value: "Australia", label: "Australia" },
 ];
+
 const categoryOptions = [
   { value: "healthcare", label: "Healthcare" },
   { value: "fashion", label: "Fashion" },
@@ -43,14 +45,20 @@ const categoryOptions = [
   { value: "lifestyle", label: "Lifestyle" },
   { value: "retail", label: "Retail" },
 ];
+const currencyOptions = [
+  { value: "BDT", label: "Bangladeshi Taka (BDT)" },
+  { value: "USD", label: "US Dollar (USD)" },
+  { value: "EUR", label: "Euro (EUR)" },
+  { value: "GBP", label: "British Pound (GBP)" },
+];
 
 const Task1: NextPage = () => {
   const [formData, setFormData] = useState<StoreFormData>({
     name: "",
     domain: "",
-    currency: "",
     country: "",
     category: "",
+    currency: "",
     email: "",
   });
   const [errors, setErrors] = useState<z.ZodIssue[]>([]);
@@ -73,19 +81,34 @@ const Task1: NextPage = () => {
       return;
     }
 
+    // Correct country to full name
+    const fullCountryName =
+      formData.country === "bd" ? "Bangladesh" : formData.country;
+
+    // Add ".expressitbd.com" to the domain
+    const fullDomain = formData.domain.trim().toLowerCase(); // Trim spaces and
+
+    const finalDomain = `${fullDomain}.expressitbd.com`;
+
     try {
-      // First check domain availability
+      // Domain Check: Check availability of the domain
       const domainCheck = await axios.get<{ available: boolean }>(
-        `https://interview-task-green.vercel.app/task/domains/check/uniquedomain.expressitbd.com`
+        `https://interview-task-green.vercel.app/task/domains/check/${finalDomain}`
       );
 
-      if (!domainCheck.data.available) {
-        // Create store if domain is unavailable
+      if (domainCheck.data.available) {
+        setServerError("Domain is already taken");
+      } else {
+        // Proceed to create store if domain is unavailable
         await axios.post(
           "https://interview-task-green.vercel.app/task/stores/create",
           {
-            ...validationResult.data,
-            domain: `${formData.domain}.expressitbd.com`,
+            name: formData.name,
+            currency: formData.currency,
+            country: fullCountryName, // Use full country name
+            domain: fullDomain, // Use the full domain with '.expressitbd.com'
+            category: formData.category,
+            email: formData.email,
           }
         );
 
@@ -93,13 +116,11 @@ const Task1: NextPage = () => {
         setFormData({
           name: "",
           domain: "",
-          currency: "",
           country: "",
           category: "",
+          currency: "",
           email: "",
         });
-      } else {
-        setServerError("Domain is already taken");
       }
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
@@ -158,24 +179,6 @@ const Task1: NextPage = () => {
             </div>
           </div>
 
-          {/* Currency Select */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Currency</label>
-            <select
-              value={formData.currency}
-              onChange={(e) => handleInputChange("currency", e.target.value)}
-              className="w-full p-2 border rounded-md"
-              disabled={isSubmitting}
-            >
-              <option value="">Select Currency</option>
-              {currencyOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Country Select */}
           <div>
             <label className="block text-sm font-medium mb-1">Country</label>
@@ -205,6 +208,24 @@ const Task1: NextPage = () => {
             >
               <option value="">Select Category</option>
               {categoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Currency Select */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Currency</label>
+            <select
+              value={formData.currency}
+              onChange={(e) => handleInputChange("currency", e.target.value)}
+              className="w-full p-2 border rounded-md"
+              disabled={isSubmitting}
+            >
+              <option value="">Select Currency</option>
+              {currencyOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

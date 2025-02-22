@@ -29,14 +29,7 @@ const StoreSchema = z.object({
 
 type StoreFormData = z.infer<typeof StoreSchema>;
 
-const countryOptions = [
-  { value: "United States", label: "United States" },
-  { value: "Canada", label: "Canada" },
-  { value: "United Kingdom", label: "United Kingdom" },
-  { value: "Bangladesh", label: "Bangladesh" },
-  { value: "India", label: "India" },
-  { value: "Australia", label: "Australia" },
-];
+const countryOptions = [{ value: "Bangladesh", label: "Bangladesh" }];
 
 const categoryOptions = [
   { value: "healthcare", label: "Healthcare" },
@@ -45,12 +38,7 @@ const categoryOptions = [
   { value: "lifestyle", label: "Lifestyle" },
   { value: "retail", label: "Retail" },
 ];
-const currencyOptions = [
-  { value: "BDT", label: "Bangladeshi Taka (BDT)" },
-  { value: "USD", label: "US Dollar (USD)" },
-  { value: "EUR", label: "Euro (EUR)" },
-  { value: "GBP", label: "British Pound (GBP)" },
-];
+const currencyOptions = [{ value: "BDT", label: "Bangladeshi Taka (BDT)" }];
 
 const Task1: NextPage = () => {
   const [formData, setFormData] = useState<StoreFormData>({
@@ -131,9 +119,30 @@ const Task1: NextPage = () => {
   };
 
   const handleInputChange = (field: keyof StoreFormData, value: string) => {
+    // Update the field value in formData
     setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear errors when user starts typing
+
+    // Clear any errors for the current field as soon as the user starts typing
     setErrors((prev) => prev.filter((e) => e.path[0] !== field));
+
+    // Trigger the validation function to validate the specific field
+    validateField(field, value);
+  };
+
+  const validateField = (field: keyof StoreFormData, value: string) => {
+    // Validate the updated field and all the other form data
+    const validationResult = StoreSchema.safeParse({
+      ...formData,
+      [field]: value, // Update only the field being changed
+    });
+    setSuccessMessage("");
+    // If validation fails, set the errors for the specific field
+    if (!validationResult.success) {
+      setErrors(validationResult.error.errors);
+    } else {
+      // Otherwise, clear any previous errors related to that field
+      setErrors((prev) => prev.filter((e) => e.path[0] !== field));
+    }
   };
 
   return (
@@ -156,27 +165,42 @@ const Task1: NextPage = () => {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              className="w-full p-2 border rounded-md"
+              onChange={(e) => {
+                handleInputChange("name", e.target.value); // Triggering validation on change
+              }}
+              className={`w-full p-2 border rounded-md ${
+                errors.some((e) => e.path[0] === "name") ? "border-red-500" : ""
+              }`}
               disabled={isSubmitting}
             />
+            {errors.some((e) => e.path[0] === "name") && (
+              <p className="text-red-500 text-sm font-semibold">
+                Name must be at least 3 characters
+              </p>
+            )}
           </div>
 
           {/* Domain Input */}
           <div>
             <label className="block text-sm font-medium mb-1">Domain</label>
-            <div className="flex">
-              <input
-                type="text"
-                value={formData.domain}
-                onChange={(e) => handleInputChange("domain", e.target.value)}
-                className="flex-1 p-2 border rounded-l-md"
-                disabled={isSubmitting}
-              />
-              <span className="px-4 py-2 bg-gray-100 border-t border-b border-r rounded-r-md">
-                .expressitbd.com
-              </span>
-            </div>
+            <input
+              type="text"
+              value={formData.domain}
+              onChange={(e) => {
+                handleInputChange("domain", e.target.value); // Triggering validation on change
+              }}
+              className={`w-full p-2 border rounded-md ${
+                errors.some((e) => e.path[0] === "domain")
+                  ? "border-red-500"
+                  : ""
+              }`}
+              disabled={isSubmitting}
+            />
+            {errors.some((e) => e.path[0] === "domain") && (
+              <p className="text-red-500 text-sm font-semibold">
+                Domain must be at least 3 characters
+              </p>
+            )}
           </div>
 
           {/* Country Select */}
@@ -237,29 +261,24 @@ const Task1: NextPage = () => {
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
-              type="email"
+              type="text"
               value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              className="w-full p-2 border rounded-md"
+              onChange={(e) => {
+                handleInputChange("email", e.target.value); // Triggering validation on change
+              }}
+              className={`w-full p-2 border rounded-md ${
+                errors.some((e) => e.path[0] === "email")
+                  ? "border-red-500"
+                  : ""
+              }`}
               disabled={isSubmitting}
             />
+            {errors.some((e) => e.path[0] === "email") && (
+              <p className="text-red-500 text-sm font-semibold">
+                Invalid email address
+              </p>
+            )}
           </div>
-
-          {/* Validation Errors */}
-          {errors.length > 0 && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <h3 className="text-red-700 font-medium mb-2">
-                Validation Errors:
-              </h3>
-              <ul className="list-disc list-inside space-y-1">
-                {errors.map((error, index) => (
-                  <li key={index} className="text-red-700">
-                    {error.path.join(".")}: {error.message}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           {/* Server Error */}
           {serverError && (

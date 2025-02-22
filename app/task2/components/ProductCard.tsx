@@ -6,7 +6,7 @@ interface ProductProps {
     _id: string;
     name: string;
     description: string;
-    price: string;
+    price: number;
     images: { secure_url: string }[];
   };
 }

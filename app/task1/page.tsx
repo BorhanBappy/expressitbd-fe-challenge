@@ -2,43 +2,12 @@
 
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
-import Head from "next/head";
 import { NextPage } from "next";
+import { InputField } from "@/app/components/InputField";
+import { SelectField } from "@/app/components/SelectField";
+import { StoreSchema, StoreFormData } from "./schemas";
+import { FORM_CONFIG } from "./formConfig";
 import { z } from "zod";
-
-// Zod Schema
-const StoreSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  domain: z
-    .string()
-    .min(3, "Domain must be at least 3 characters")
-    .refine((val) => !val.includes(" "), "Domain cannot contain spaces")
-    .refine(
-      (val) => /^[a-z0-9-]+$/.test(val),
-      "Domain can only contain lowercase letters, numbers, and hyphens"
-    )
-    .refine(
-      (val) => !val.startsWith("-") && !val.endsWith("-"),
-      "Domain cannot start or end with a hyphen"
-    ),
-  country: z.string().min(1, "Please select a country"),
-  category: z.string().min(1, "Please select a category"),
-  currency: z.string().length(3, "Currency must be 3 characters"),
-  email: z.string().email("Invalid email address"),
-});
-
-type StoreFormData = z.infer<typeof StoreSchema>;
-
-const countryOptions = [{ value: "Bangladesh", label: "Bangladesh" }];
-
-const categoryOptions = [
-  { value: "healthcare", label: "Healthcare" },
-  { value: "fashion", label: "Fashion" },
-  { value: "beauty", label: "Beauty & Personal Care" },
-  { value: "lifestyle", label: "Lifestyle" },
-  { value: "retail", label: "Retail" },
-];
-const currencyOptions = [{ value: "BDT", label: "Bangladeshi Taka (BDT)" }];
 
 const Task1: NextPage = () => {
   const [formData, setFormData] = useState<StoreFormData>({
@@ -117,237 +86,105 @@ const Task1: NextPage = () => {
   };
 
   const handleInputChange = (field: keyof StoreFormData, value: string) => {
-    // Update the field value in formData
     setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // Clear any errors for the current field as soon as the user starts typing
     setErrors((prev) => prev.filter((e) => e.path[0] !== field));
-
-    // Trigger the validation function to validate the specific field
     validateField(field, value);
   };
 
   const validateField = (field: keyof StoreFormData, value: string) => {
-    // Validate the updated field and all the other form data
-    const validationResult = StoreSchema.safeParse({
-      ...formData,
-      [field]: value, // Update only the field being changed
-    });
+    const result = StoreSchema.safeParse({ ...formData, [field]: value });
     setSuccessMessage("");
-    // If validation fails, set the errors for the specific field
-    if (!validationResult.success) {
-      setErrors(validationResult.error.errors);
-    } else {
-      // Otherwise, clear any previous errors related to that field
-      setErrors((prev) => prev.filter((e) => e.path[0] !== field));
-    }
+    !result.success
+      ? setErrors(result.error.errors)
+      : setErrors((prev) => prev.filter((e) => e.path[0] !== field));
   };
 
   return (
-    <div className="min-h-screen p-8">
-      <Head>
-        <title>Create Store - Express IT Task</title>
-        <meta
-          name="description"
-          content="Create a new store with domain verification"
-        />
-      </Head>
+    <div className="min-h-screen p-4 sm:p-6 md:p-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center">
+          Create New Store
+        </h1>
 
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Create New Store</h1>
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 sm:space-y-6 bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-md"
+        >
+          <InputField
+            label="Store Name"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            errors={errors}
+            disabled={isSubmitting}
+          />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Name Input */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Store Name</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => {
-                handleInputChange("name", e.target.value); // Triggering validation on change
-              }}
-              className={`w-full p-2 border rounded-md ${
-                errors.some((e) => e.path[0] === "name") ? "border-red-500" : ""
-              }`}
-              disabled={isSubmitting}
-            />
-            {errors.some((e) => e.path[0] === "name") && (
-              <p className="text-red-500 text-sm font-semibold">
-                Name must be at least 3 characters
-              </p>
-            )}
-          </div>
+          <InputField
+            label="Domain"
+            name="domain"
+            value={formData.domain}
+            onChange={handleInputChange}
+            errors={errors}
+            disabled={isSubmitting}
+            suffix=".expressitbd.com"
+          />
 
-          {/* Domain Input */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Domain</label>
-            <input
-              type="text"
-              value={formData.domain}
-              onChange={(e) => {
-                handleInputChange("domain", e.target.value); // Triggering validation on change
-              }}
-              className={`w-full p-2 border rounded-md ${
-                errors.some((e) => e.path[0] === "domain")
-                  ? "border-red-500"
-                  : ""
-              }`}
-              disabled={isSubmitting}
-            />
-            {errors.some((e) => e.path[0] === "domain") && (
-              <p className="text-red-500 text-sm font-semibold">
-                Domain must be at least 3 characters
-              </p>
-            )}
-          </div>
-
-          {/* Country Select */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Country</label>
-            <select
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SelectField
+              label="Country"
+              name="country"
               value={formData.country}
-              onChange={(e) => handleInputChange("country", e.target.value)}
-              className={`w-full p-2 border rounded-md ${
-                errors.some((e) => e.path[0] === "country")
-                  ? "border-red-500"
-                  : ""
-              }`}
-              disabled={isSubmitting}
-            >
-              <option value="">Select Country</option>
-              {countryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {errors.some((e) => e.path[0] === "country") && (
-              <p className="text-red-500 text-sm font-semibold">
-                Please select a country
-              </p>
-            )}
-          </div>
-
-          {/* Category Select */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Category</label>
-            <select
-              value={formData.category}
-              onChange={(e) => handleInputChange("category", e.target.value)}
-              className={`w-full p-2 border rounded-md ${
-                errors.some((e) => e.path[0] === "category")
-                  ? "border-red-500"
-                  : ""
-              }`}
-              disabled={isSubmitting}
-            >
-              <option value="">Select Category</option>
-              {categoryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {errors.some((e) => e.path[0] === "category") && (
-              <p className="text-red-500 text-sm font-semibold">
-                Please select a category
-              </p>
-            )}
-          </div>
-
-          {/* Currency Select */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Currency</label>
-            <select
-              value={formData.currency}
-              onChange={(e) => handleInputChange("currency", e.target.value)}
-              className={`w-full p-2 border rounded-md ${
-                errors.some((e) => e.path[0] === "currency")
-                  ? "border-red-500"
-                  : ""
-              }`}
-              disabled={isSubmitting}
-            >
-              <option value="">Select Currency</option>
-              {currencyOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {errors.some((e) => e.path[0] === "currency") && (
-              <p className="text-red-500 text-sm font-semibold">
-                Please select a currency
-              </p>
-            )}
-          </div>
-
-          {/* Email Input */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="text"
-              value={formData.email}
-              onChange={(e) => {
-                handleInputChange("email", e.target.value); // Triggering validation on change
-              }}
-              className={`w-full p-2 border rounded-md ${
-                errors.some((e) => e.path[0] === "email")
-                  ? "border-red-500"
-                  : ""
-              }`}
+              options={FORM_CONFIG.countryOptions}
+              onChange={handleInputChange}
+              errors={errors}
               disabled={isSubmitting}
             />
-            {errors.some((e) => e.path[0] === "email") && (
-              <p className="text-red-500 text-sm font-semibold">
-                Invalid email address
-              </p>
-            )}
+
+            <SelectField
+              label="Category"
+              name="category"
+              value={formData.category}
+              options={FORM_CONFIG.categoryOptions}
+              onChange={handleInputChange}
+              errors={errors}
+              disabled={isSubmitting}
+            />
           </div>
 
-          {/* Server Error */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SelectField
+              label="Currency"
+              name="currency"
+              value={formData.currency}
+              options={FORM_CONFIG.currencyOptions}
+              onChange={handleInputChange}
+              errors={errors}
+              disabled={isSubmitting}
+            />
+
+            <InputField
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              errors={errors}
+              disabled={isSubmitting}
+            />
+          </div>
+
           {serverError && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2 text-red-700">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>{serverError}</span>
-              </div>
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+              {serverError}
             </div>
           )}
 
-          {/* Success Message */}
           {successMessage && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2 text-green-700">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span>{successMessage}</span>
-              </div>
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+              {successMessage}
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting}
@@ -355,7 +192,7 @@ const Task1: NextPage = () => {
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
                 Creating Store...
               </div>
             ) : (
@@ -367,5 +204,4 @@ const Task1: NextPage = () => {
     </div>
   );
 };
-
 export default Task1;
